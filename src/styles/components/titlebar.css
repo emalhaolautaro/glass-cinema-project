@@ -1,0 +1,67 @@
+.title-bar {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    -webkit-app-region: drag;
+}
+
+.traffic-lights {
+    display: flex;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+}
+
+.traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.5);
+    /* Icon color */
+    font-size: 8px;
+    /* Icon size */
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+}
+
+.traffic-light:hover {
+    filter: brightness(0.8);
+    opacity: 1;
+}
+
+/* Hover Icons using ::before */
+.traffic-light.close:hover::before {
+    content: 'x';
+    /* or '×' */
+}
+
+.traffic-light.minimize:hover::before {
+    content: '-';
+}
+
+.traffic-light.maximize:hover::before {
+    content: '+';
+    font-size: 10px;
+    /* Slightly larger for + */
+}
+
+/* Colors */
+.traffic-light.close {
+    background-color: #FF5F56;
+}
+
+.traffic-light.minimize {
+    background-color: #FFBD2E;
+}
+
+.traffic-light.maximize {
+    background-color: #27C93F;
+}

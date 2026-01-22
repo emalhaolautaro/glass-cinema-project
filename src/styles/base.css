@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap');
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-color: #ffffff;
+    --secondary-text: rgba(255, 255, 255, 0.7);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: transparent;
+    color: var(--text-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+h1 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    letter-spacing: 4px;
+    margin-bottom: 40px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(to bottom, #ffffff, #aaaaaa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+
+/* TMDb Attribution */
+.tmdb-attribution {
+    position: fixed;
+    bottom: 8px;
+    right: 12px;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+    z-index: 1;
+}

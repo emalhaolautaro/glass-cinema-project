@@ -1,0 +1,35 @@
+.empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    color: var(--secondary-text);
+    text-align: center;
+    padding: 60px 40px;
+    /* Increased top/bottom padding for better spacing */
+}
+
+.empty-state-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+    fill: currentColor;
+}
+
+.empty-state h2 {
+    font-weight: 300;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    max-width: 600px;
+    /* Increased from 300px to allow text to stretch */
+    line-height: 1.5;
+}

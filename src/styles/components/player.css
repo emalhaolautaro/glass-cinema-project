@@ -1,0 +1,467 @@
+/* Player View */
+.player-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.player-view.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+#player-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Close Button (Mac Style) */
+.player-close-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease, background 0.2s;
+    z-index: 1002;
+    line-height: 1;
+}
+
+.player-close-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Floating Controls (Pill Design) */
+.player-controls {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    max-width: 90%;
+    height: 60px;
+    background: rgba(40, 40, 40, 0.4);
+    /* Darker glass for better contrast on videos */
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    /* Pill shape */
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 15px;
+    z-index: 1001;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Default State (Visible) */
+.player-controls,
+.player-close-btn {
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+/* Inactive State (Hidden via JS) */
+.player-view.user-inactive .player-controls,
+.player-view.user-inactive .player-close-btn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Force show on hover of the controls themselves (optional, but tricky if cursor is none) */
+/* .player-controls:hover { opacity: 1 !important; } */
+
+/* Play/Pause Button */
+.control-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    width: 40px;
+    height: 40px;
+}
+
+.control-btn:hover {
+    opacity: 1;
+}
+
+/* Progress Bar */
+.progress-container {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-buffer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    /* Buffer color - slightly visible behind playback */
+    width: 0%;
+    z-index: 0;
+    pointer-events: none;
+    transition: width 0.2s linear;
+}
+
+.progress-bar {
+    position: relative;
+    /* To sit on top of buffer */
+    width: 0%;
+    height: 100%;
+    background: white;
+    border-radius: 3px;
+    transition: width 0.1s linear;
+    z-index: 1;
+}
+
+.time-display {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* Volume Control */
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 10px;
+}
+
+.volume-icon {
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+}
+
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+/* Subtitle Drop Overlay */
+.subtitle-drop-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1003;
+}
+
+.subtitle-drop-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.subtitle-drop-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.subtitle-drop-content svg {
+    stroke: white;
+    opacity: 0.8;
+}
+
+/* Subtitle Styling (Apple TV Style - Responsive) */
+::cue {
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    font-size: 2.5vh;
+    /* Scales with screen height */
+    font-family: 'San Francisco', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+video::cue {
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+}
+
+/* Subtitle positioning - away from bottom edge */
+video::-webkit-media-text-track-display {
+    padding-bottom: 5vh;
+}
+
+/* ==========================================
+   Fullscreen Mode
+   ========================================== */
+#player-view:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+}
+
+#player-view:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+}
+
+/* Controls stay visible and on top in fullscreen */
+#player-view:fullscreen .player-controls,
+#player-view:-webkit-full-screen .player-controls {
+    bottom: 10%;
+    z-index: 2147483647;
+    /* Maximum z-index */
+}
+
+#player-view:fullscreen .player-close-btn,
+#player-view:-webkit-full-screen .player-close-btn {
+    z-index: 2147483647;
+}
+
+/* Subtitle overlay also needs high z-index */
+#player-view:fullscreen .subtitle-drop-overlay,
+#player-view:-webkit-full-screen .subtitle-drop-overlay {
+    z-index: 2147483646;
+}
+
+/* ==========================================
+   Subtitle Language Menu (macOS Style)
+   ========================================== */
+.subtitle-menu {
+    position: absolute;
+    bottom: 120px;
+    right: 20px;
+    min-width: 220px;
+    min-height: 100px;
+    max-height: 300px;
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1004;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.subtitle-menu.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+}
+
+.subtitle-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.subtitle-menu-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.subtitle-menu-close:hover {
+    color: white;
+}
+
+.subtitle-menu-list {
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.subtitle-menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.subtitle-menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.subtitle-menu-item.active {
+    color: #4a9eff;
+}
+
+.subtitle-menu-item.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.subtitle-menu-rating {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Fullscreen: Menu positioning */
+#player-view:fullscreen .subtitle-menu,
+#player-view:-webkit-full-screen .subtitle-menu {
+    bottom: 15%;
+    z-index: 2147483645;
+}
+
+.subtitle-empty-state {
+    padding: 24px 16px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==========================================
+   Cast Mode Indicator
+   ========================================== */
+.player-view.cast-mode::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(30, 30, 40, 0.9) 0%, rgba(0, 0, 0, 0.95) 100%);
+    z-index: 1;
+}
+
+.player-view.cast-mode::after {
+    content: 'Transmitiendo a TV';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 2;
+}
+
+.player-view.cast-mode #player-video {
+    z-index: 0;
+}
+
+/* Cast mode pulsing icon */
+.player-view.cast-mode .player-controls::before {
+    content: '📺';
+    font-size: 1.2rem;
+    margin-right: 8px;
+    animation: cast-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cast-pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}

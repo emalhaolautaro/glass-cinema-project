@@ -1,0 +1,78 @@
+/* Main Content Header & Navigation */
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px;
+    border-radius: 12px;
+}
+
+.nav-tab {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-tab.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Library specific styles */
+.library-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-left: 10px;
+    border-left: 4px solid var(--accent-color, #a855f7);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.empty-message-small {
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+    font-style: italic;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+
+/* Utilities for View Switching */
+.view-content {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

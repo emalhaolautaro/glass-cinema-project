@@ -1,0 +1,95 @@
+/* Action Buttons (Like, Watch Later, Download) */
+
+.modal-actions-secondary {
+    display: flex;
+    gap: 12px;
+    margin-top: auto;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.action-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.action-btn:active {
+    transform: scale(0.95);
+}
+
+.action-btn img {
+    width: 20px;
+    height: 20px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    transition: transform 0.2s ease;
+}
+
+.action-btn:hover img {
+    transform: scale(1.1);
+}
+
+/* Tooltip implementation */
+.action-btn::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    margin-bottom: 10px;
+}
+
+.action-btn:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Action Buttons Active State */
+.action-btn.active {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: scale(1.1);
+}
+
+.action-btn.active img {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+/* Specific colors for specific actions if desired */
+#btn-like.active {
+    background: rgba(239, 68, 68, 0.2) !important;
+    /* Red tint */
+    border-color: rgba(239, 68, 68, 0.5) !important;
+}
+
+#btn-like.active img {
+    filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.5));
+}

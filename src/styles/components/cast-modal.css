@@ -1,0 +1,332 @@
+/* Cast Modal - Ultra-Glassmorphism Device Selector */
+
+.cast-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.cast-modal-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.cast-modal {
+    background: rgba(20, 20, 30, 0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.5),
+        0 0 1px rgba(255, 255, 255, 0.1) inset;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    overflow: hidden;
+}
+
+.cast-modal-backdrop.active .cast-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* Header */
+.cast-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cast-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+}
+
+.cast-modal-title svg {
+    opacity: 0.9;
+}
+
+.cast-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.cast-modal-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.1);
+}
+
+/* Body */
+.cast-modal-body {
+    padding: 16px 24px;
+    min-height: 180px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+/* Loader */
+.cast-device-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cast-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    animation: cast-spin 1s linear infinite;
+}
+
+@keyframes cast-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* No Devices State */
+.cast-no-devices {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.cast-no-devices svg {
+    opacity: 0.5;
+}
+
+.cast-no-devices p {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cast-no-devices small {
+    font-size: 0.85rem;
+    opacity: 0.6;
+}
+
+/* Device List */
+.cast-device-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cast-device-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cast-device-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Selected state with glowing border */
+.cast-device-btn.selected {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.cast-device-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cast-device-icon svg {
+    opacity: 0.8;
+}
+
+.cast-device-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.cast-device-name {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.cast-device-type {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Subtitle Selector */
+.cast-subtitle-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cast-subtitle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cast-subtitle-label svg {
+    opacity: 0.7;
+}
+
+.cast-subtitle-select {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+}
+
+.cast-subtitle-select:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.cast-subtitle-select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.cast-subtitle-select option {
+    background: #1a1a2e;
+    color: white;
+    padding: 10px;
+}
+
+/* Footer */
+.cast-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cast-btn-cancel,
+.cast-btn-connect {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cast-btn-cancel {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cast-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.cast-btn-connect {
+    background: white;
+    border: none;
+    color: #1a1a2e;
+    font-weight: 600;
+}
+
+.cast-btn-connect:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.cast-btn-connect:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Scrollbar */
+.cast-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cast-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cast-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.cast-modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}

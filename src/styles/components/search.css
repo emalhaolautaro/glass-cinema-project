@@ -1,0 +1,101 @@
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    /* Wider search bar */
+}
+
+.search-input {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 18px;
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    outline: none;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+    /* Improved placeholder style */
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.search-input:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.search-button {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    /* Remove solid background */
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.search-button:hover {
+    /* background: rgba(255, 255, 255, 0.1); Optional hover effect */
+    opacity: 0.8;
+}
+
+.search-button img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Filters */
+.filters-container {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    /* More air */
+    justify-content: center;
+}
+
+.search-filter {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s;
+    min-width: 120px;
+    text-align: center;
+}
+
+.search-filter:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.search-filter:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #4a9eff;
+}
+
+.search-filter option {
+    background: #1e1e1e;
+    color: white;
+}

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glass Cinema</title>
+
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components/titlebar.css">
+    <link rel="stylesheet" href="styles/components/search.css">
+    <link rel="stylesheet" href="styles/components/cards.css">
+    <link rel="stylesheet" href="styles/components/modal.css">
+    <link rel="stylesheet" href="styles/components/action-buttons.css">
+    <link rel="stylesheet" href="styles/components/empty-state.css">
+    <link rel="stylesheet" href="styles/components/player.css">
+    <link rel="stylesheet" href="styles/components/loader.css">
+    <link rel="stylesheet" href="styles/components/cast-modal.css">
+    <link rel="stylesheet" href="styles/components/toast.css">
+    <link rel="stylesheet" href="styles/components/library.css">
+    <link rel="stylesheet" href="styles/components/download.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <div class="traffic-lights">
+                <div class="traffic-light close" id="btn-close"></div>
+                <div class="traffic-light minimize" id="btn-minimize"></div>
+                <div class="traffic-light maximize" id="btn-maximize"></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <header class="app-header">
+                <div class="header-row">
+                    <h1 class="app-title">GLASS CINEMA</h1>
+                    <div class="nav-container">
+                        <button id="nav-home" class="nav-btn active">Explorar</button>
+                        <button id="nav-library" class="nav-btn">Mi Biblioteca</button>
+                        <button id="nav-downloads" class="nav-btn">Descargas</button>
+                    </div>
+                </div>
+
+                <!-- Search container inside header for sticky effect if desired, or keep sticky separately -->
+                <!-- The user requested "Header Fijo: Poné la barra de búsqueda y los botones de navegación dentro de un <header>" -->
+
+                <div id="view-home-header" class="view-header">
+                    <!-- Wrapper for search/filters if we want them sticky too, or just the main header -->
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Search for movies...">
+                        <button class="search-button">
+                            <img src="assets/icons/search.svg" alt="Search">
+                        </button>
+                    </div>
+
+                    <div class="filters-container">
+                        <select id="filter-genre" class="search-filter">
+                            <option value="">All Genres</option>
+                            <option value="action">Action</option>
+                            <option value="adventure">Adventure</option>
+                            <option value="animation">Animation</option>
+                            <option value="biography">Biography</option>
+                            <option value="comedy">Comedy</option>
+                            <option value="crime">Crime</option>
+                            <option value="documentary">Documentary</option>
+                            <option value="drama">Drama</option>
+                            <option value="family">Family</option>
+                            <option value="fantasy">Fantasy</option>
+                            <option value="history">History</option>
+                            <option value="horror">Horror</option>
+                            <option value="music">Music</option>
+                            <option value="mystery">Mystery</option>
+                            <option value="romance">Romance</option>
+                            <option value="sci-fi">Sci-Fi</option>
+                            <option value="thriller">Thriller</option>
+                            <option value="war">War</option>
+                            <option value="western">Western</option>
+                        </select>
+
+                        <select id="filter-sort" class="search-filter">
+                            <option value="date_added">Latest</option>
+                            <option value="download_count">Popular</option>
+                            <option value="rating">Top Rated</option>
+                            <option value="seeds">Seeds</option>
+                            <option value="year">Year</option>
+                        </select>
+                    </div>
+                </div>
+            </header>
+
+            <div id="content-scroll-area">
+                <div id="view-home" class="view-content active">
+                    <!-- Filters and Search were moved up or kept here? User said: "Poné la barra de búsqueda y los botones de navegación dentro de un <header>" -->
+                    <!-- I placed them in header above to follow instruction strictly -->
+
+                    <div id="movies-grid" class="movies-grid">
+                        <!-- Movies will be injected here -->
+                    </div>
+                </div> <!-- End Home View -->
+
+                <div id="view-library" class="view-content" style="display: none;">
+                    <div class="library-section">
+                        <h2 class="section-title">Favoritos</h2>
+                        <div id="lib-favorites" class="movies-grid">
+                            <!-- Favorites will be injected here -->
+                        </div>
+                        <div id="favorites-empty" class="empty-message-small" style="display: none;">
+                            No tenés favoritos aún.
+                        </div>
+                    </div>
+
+                    <div class="library-section">
+                        <h2 class="section-title">Ver más tarde</h2>
+                        <div id="lib-watchlist" class="movies-grid">
+                            <!-- Watchlist will be injected here -->
+                        </div>
+                        <div id="watchlist-empty" class="empty-message-small" style="display: none;">
+                            Tu lista está vacía.
+                        </div>
+                    </div>
+
+                    <!-- Downloads Section (Hidden by default, shown when mode is 'downloads') -->
+                    <div id="lib-section-downloads" class="library-section" style="display: none;">
+                        <h2 class="section-title">Descargas Completadas</h2>
+                        <div id="lib-downloads" class="movies-grid">
+                            <!-- Downloads injected here -->
+                        </div>
+                        <div id="downloads-empty" class="empty-state" style="display: none;">
+                            <div class="empty-icon" style="text-align: center; margin-bottom: 10px;">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </div>
+                            <h3 style="text-align: center;">No tenés descargas</h3>
+                            <p style="text-align: center; color: #aaa;">Las películas que descargues aparecerán acá.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- TMDb Attribution (Required by API ToS) -->
+        <footer class="tmdb-attribution">
+            This product uses the TMDB API but is not endorsed or certified by TMDB.
+        </footer>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="modal-backdrop" class="modal-backdrop">
+        <div id="modal-content-panel" class="modal-content">
+            <button id="modal-close" class="modal-close">&times;</button>
+            <div class="modal-body">
+                <div class="modal-poster-container">
+                    <img id="m-poster" class="modal-poster" src="" alt="">
+                </div>
+                <div class="modal-info">
+                    <h2 id="m-title" class="modal-title">Movie Title</h2>
+                    <div class="modal-meta">
+                        <span id="m-year">2021</span>
+                        <span id="m-rating">8.5/10</span>
+                        <span id="m-runtime">120 min</span>
+                    </div>
+                    <div id="m-genres" class="modal-genres"></div>
+                    <div id="m-qualities" class="modal-qualities"></div>
+                    <p id="m-synopsis" class="modal-synopsis">
+                        Lorem ipsum dolor sit amet...
+                    </p>
+                    <div class="modal-actions-secondary">
+                        <button id="btn-like" class="action-btn" title="Me gusta">
+                            <img src="assets/icons/heart.svg" alt="Like">
+                        </button>
+                        <button id="btn-watch-later" class="action-btn" title="Ver más tarde">
+                            <img src="assets/icons/clock.svg" alt="Watch Later">
+                        </button>
+                        <button id="btn-download" class="action-btn" title="Descargar">
+                            <img src="assets/icons/download.svg" alt="Download">
+                        </button>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="btn-play" class="btn-primary">
+                            ▶ Reproducir Local
+                        </button>
+                        <button id="btn-cast" class="btn-secondary">
+                            ⎄ Cast to TV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player View -->
+    <div id="player-view" class="player-view">
+        <div id="player-loader" class="player-loader"></div>
+        <video id="player-video"></video>
+        <div id="player-close" class="player-close-btn">&times;</div>
+
+        <div class="player-controls">
+            <button id="p-play-pause" class="control-btn">
+                <!-- Play Icon -->
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+            </button>
+
+            <div class="progress-container" id="p-progress-container">
+                <div class="progress-buffer" id="p-buffer-bar"></div>
+                <div class="progress-bar" id="p-progress-bar"></div>
+            </div>
+
+            <span id="p-time" class="time-display">00:00</span>
+
+            <div class="volume-container">
+                <svg class="volume-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                <input type="range" id="p-volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
+            </div>
+
+            <button id="p-subtitles" class="control-btn" title="Subtítulos">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                    <line x1="6" y1="10" x2="10" y2="10"></line>
+                    <line x1="14" y1="10" x2="18" y2="10"></line>
+                    <line x1="6" y1="14" x2="18" y2="14"></line>
+                </svg>
+            </button>
+
+            <button id="p-fullscreen" class="control-btn" title="Pantalla completa">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Subtitle Language Menu -->
+        <div id="subtitle-menu" class="subtitle-menu">
+            <div class="subtitle-menu-header">
+                <span>Subtítulos</span>
+                <button id="subtitle-menu-close" class="subtitle-menu-close">&times;</button>
+            </div>
+            <div id="subtitle-menu-list" class="subtitle-menu-list">
+                <!-- Languages will be injected here -->
+            </div>
+        </div>
+
+        <!-- Subtitle Drop Overlay -->
+        <div id="subtitle-drop-overlay" class="subtitle-drop-overlay">
+            <div class="subtitle-drop-content">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>Soltá para cargar subtítulos</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (Modular Order is Critical) -->
+    <script src="renderer/globals.js"></script>
+    <script src="renderer/components/Toast.js"></script>
+    <script src="renderer/components/CastModal.js"></script>
+    <script src="renderer/components/DownloadModal.js"></script>
+    <script src="renderer/components/ConfirmModal.js"></script>
+    <!-- Services (must load before ui.js and main.js) -->
+    <script src="renderer/services/MovieMapper.js"></script>
+    <script src="renderer/services/MetadataService.js"></script>
+    <script src="renderer/ui.js"></script>
+    <script src="renderer/library.js"></script>
+    <script src="renderer/player.js"></script>
+    <script src="renderer/subtitles.js"></script>
+    <script src="renderer/main.js"></script>
+</body>
+
+</html>

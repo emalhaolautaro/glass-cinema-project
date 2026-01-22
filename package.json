@@ -1,0 +1,26 @@
+{
+  "name": "streaming",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "electron": "^40.0.0"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "chromecasts": "^1.10.2",
+    "dlnacasts": "^0.1.0",
+    "electron-store": "^11.0.2",
+    "iconv-lite": "^0.7.2",
+    "webtorrent": "^1.9.7"
+  }
+}

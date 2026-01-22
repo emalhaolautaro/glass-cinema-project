@@ -1,0 +1,118 @@
+/* Global Layout Fixes */
+body {
+    overflow: hidden;
+    /* Prevent body scroll */
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    color: white;
+    background: transparent;
+}
+
+.app-container {
+    flex: 1;
+    background: rgba(20, 20, 30, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    /* Full viewport height */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    overflow: hidden;
+    margin: 10px;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Hide overflow on container, scroll internal */
+    width: 100%;
+    position: relative;
+    padding: 0;
+    /* Remove padding from main wrapper */
+}
+
+/* Sticky Header */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(20, 20, 30, 0.5);
+    /* Semi-transparent */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 20px 20px 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.app-title {
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: 0.8;
+    background: linear-gradient(to bottom, #fff, #aaa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+/* Scrollable Content Area */
+#content-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    scroll-behavior: smooth;
+}
+
+/* Nav Buttons Re-style */
+.nav-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 20px;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    /* Remove default focus ring */
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-btn.active {
+    background: rgba(100, 200, 255, 0.2);
+    border-color: rgba(100, 200, 255, 0.5);
+    box-shadow: 0 0 15px rgba(100, 200, 255, 0.2);
+    color: #fff;
+    text-shadow: 0 0 5px rgba(100, 200, 255, 0.5);
+}
+
+/* Ensure empty states look good in new layout */
+.empty-state,
+.empty-message-small {
+    margin-top: 50px;
+    text-align: center;
+}
