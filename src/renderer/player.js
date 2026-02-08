@@ -267,10 +267,26 @@ const Player = {
         // Hide UI
         UI.hidePlayer();
 
-        // Stop backend stream if possible
+        // === FULL CLEANUP ===
+        // Clear subtitles (both local tracks and main process state)
+        if (typeof Subtitles !== 'undefined' && Subtitles.clearTracks) {
+            Subtitles.clearTracks();
+        }
+        if (window.api.clearSubtitles) {
+            window.api.clearSubtitles();
+        }
+
+        // Reset app state
+        App.state.currentSubtitleUrl = null;
+        App.state.castPendingMode = false;
+        App.state.streamUrl = null;
+
+        // Stop backend stream
         if (window.api.stopStream) {
             window.api.stopStream();
         }
+
+        console.log('[Player] Full cleanup complete');
     },
 
     setupVideoEvents() {

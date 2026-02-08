@@ -255,6 +255,14 @@ window.UI = {
         });
     },
 
+    appendToGrid(movies) {
+        if (!movies || movies.length === 0) return;
+        movies.forEach(movie => {
+            const card = this.createCardElement(movie);
+            App.dom.grid.appendChild(card);
+        });
+    },
+
     showEmptyState(query) {
         App.dom.grid.innerHTML = `
             <div class="empty-state" style="color: white; text-align: center; margin-top: 50px;">

@@ -7,9 +7,13 @@ const App = {
         movies: [],
         currentMovie: null,
         availableSubtitles: [],
-        currentSubtitleUrl: null, // Download URL of selected subtitle for cast
+        currentSubtitleUrl: null,
         downloadProgress: 0,
-        apiUrl: null
+        apiUrl: null,
+        // Pagination for infinite scroll
+        currentPage: 1,
+        isLoadingMore: false,
+        hasMoreMovies: true
     },
 
     dom: {

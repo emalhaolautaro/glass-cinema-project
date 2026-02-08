@@ -32,7 +32,26 @@ const Main = {
         App.state.apiUrl = await window.api.getApiUrl();
         this.fetchMovies();
 
+        // Setup infinite scroll
+        this.setupInfiniteScroll();
+
         console.log('[Main] Ready');
+    },
+
+    setupInfiniteScroll() {
+        const sentinel = document.createElement('div');
+        sentinel.id = 'scroll-sentinel';
+        sentinel.style.height = '1px';
+        App.dom.grid.after(sentinel);
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && App.state.hasMoreMovies && !App.state.isLoadingMore) {
+                const query = App.dom.search.input.value.trim();
+                this.fetchMovies(query, true);
+            }
+        }, { rootMargin: '300px' });
+
+        observer.observe(sentinel);
     },
 
     setupWindowControls() {
@@ -105,10 +124,20 @@ const Main = {
         this.fetchMovies(query);
     },
 
-    async fetchMovies(query = '') {
+    async fetchMovies(query = '', append = false) {
         if (!App.state.apiUrl) return;
 
-        // Abort previous request if exists
+        // Guard against duplicate loads
+        if (append && App.state.isLoadingMore) return;
+        if (append && !App.state.hasMoreMovies) return;
+
+        if (append) {
+            App.state.isLoadingMore = true;
+        } else {
+            App.state.currentPage = 1;
+            App.state.hasMoreMovies = true;
+        }
+
         if (App.state.fetchController) {
             App.state.fetchController.abort();
         }
@@ -116,61 +145,59 @@ const Main = {
         const signal = App.state.fetchController.signal;
 
         try {
-            // UI Feedback: Opacity for loading state
-            App.dom.grid.style.opacity = '0.5';
-            App.dom.grid.style.transition = 'opacity 0.3s ease';
+            if (!append) {
+                App.dom.grid.style.opacity = '0.5';
+                App.dom.grid.style.transition = 'opacity 0.3s ease';
+                UI.showSkeletons(10);
+            }
 
-            // Show skeletons immediately if it's a new search/load (optional, keeping existing behavior)
-            // UI.showSkeletons(10); // Keeping existing behavior effectively, but skeletons usually replace content. 
-            // If we use opacity, maybe we don't need skeletons? But user didn't ask to remove skeletons.
-            // Let's keep skeletons for initial load, but opacity helps for "updates".
-            // Actually, showing skeletons CLEARS the grid, so opacity 0.5 on skeletons is fine.
-            UI.showSkeletons(10);
-
-            // Get filter values
             const genre = App.dom.search.genre.value;
             const sort = App.dom.search.sort.value;
 
-            // Build URL with params
             const params = new URLSearchParams({
-                limit: 50,
+                limit: 20,
+                page: App.state.currentPage,
                 sort_by: sort,
                 ...(query && { query_term: query }),
                 ...(genre && { genre: genre })
             });
 
             const url = `${App.state.apiUrl}?${params.toString()}`;
-            // Fix: Check if URL is double-protocol
             if (url.startsWith('https://yts.bz/https://yts.bz')) {
                 console.error('[Main] Detected malformed URL:', url);
-                // Reset API URL to default just in case
                 App.state.apiUrl = 'https://yts.bz/api/v2/list_movies.json';
                 return this.fetchMovies(query);
             }
             console.log('[Main] Fetching:', url);
 
-            // Safety Timeout (8 seconds)
             const timeoutId = setTimeout(() => {
                 if (App.state.fetchController) {
                     App.state.fetchController.abort();
                     Toast.show('La conexión es muy lenta, reintentando...', 'warning');
-                    // Reset opacity logic handled in catch/finally if we had one, but effectively we enter catch with AbortError
                 }
             }, 8000);
 
             const res = await fetch(url, { signal });
-
-            clearTimeout(timeoutId); // Clear timeout on success response
+            clearTimeout(timeoutId);
 
             const data = await res.json();
 
             if (data?.data?.movies) {
-                App.state.movies = data.data.movies;
-                UI.renderGrid(App.state.movies);
+                const newMovies = data.data.movies;
 
-                // Smart Enrichment in Background (Non-blocking)
-                this.enrichMovies(App.state.movies);
-            } else if (query) {
+                if (append) {
+                    App.state.movies = [...App.state.movies, ...newMovies];
+                    UI.appendToGrid(newMovies);
+                } else {
+                    App.state.movies = newMovies;
+                    UI.renderGrid(newMovies);
+                }
+
+                App.state.currentPage++;
+                App.state.hasMoreMovies = newMovies.length === 20;
+
+                this.enrichMovies(newMovies);
+            } else if (query && !append) {
                 UI.showEmptyState(query);
             }
         } catch (e) {
@@ -178,13 +205,13 @@ const Main = {
                 console.log('[Main] Fetch aborted');
             } else {
                 console.error('[Main] Fetch error:', e);
-                UI.showError(e.message);
+                if (!append) UI.showError(e.message);
                 Toast.show(`Connection Error: ${e.message}`, 'error');
             }
         } finally {
-            // Restore Opacity
             App.dom.grid.style.opacity = '1';
             App.state.fetchController = null;
+            App.state.isLoadingMore = false;
         }
     },
 
@@ -492,18 +519,19 @@ const Main = {
         }
     },
 
-    /**
-     * Prepare stream for casting (NO local UI changes, NO local playback)
-     */
     async prepareStreamForCast(movie) {
-        console.log(`[Main] Preparing stream for cast (NO local playback): ${movie.title}`);
+        console.log(`[Main] Preparing stream for cast: ${movie.title}`);
 
-        // Set flag to prevent local playback
         App.state.castPendingMode = true;
 
-        // cleanup previous
+        // FULL cleanup to prevent subtitle accumulation
         Subtitles.clearTracks();
         window.api.clearSubtitles();
+        App.state.currentSubtitleUrl = null;
+        App.state.availableSubtitles = [];
+        if (App.state.failedSubtitles) {
+            App.state.failedSubtitles.delete(movie.imdb_code);
+        }
 
         // Start Stream
         const torrent = movie.torrents?.find(t => t.quality === '1080p') || movie.torrents?.[0];

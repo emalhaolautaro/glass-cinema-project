@@ -25,20 +25,27 @@ function init() {
     if (initialized) return;
 
     console.log('[DlnaProvider] Initializing singleton browser...');
-    browser = dlnacasts();
+
+    try {
+        browser = dlnacasts();
+    } catch (e) {
+        console.error('[DlnaProvider] Failed to initialize browser:', e);
+        return;
+    }
+
     initialized = true;
 
-    // Attach persistent listeners
     browser.on('update', (device) => {
+        console.log('[DlnaProvider] RAW update event - host:', device?.host, 'name:', device?.name);
+
         if (!device || !device.name) return;
 
         const deviceId = device.host || device.name;
-
         const existing = devices.get(deviceId);
         const isNew = !existing;
 
         if (isNew) {
-            console.log(`[DlnaProvider] Device found: Name=${device.name}, Host=${device.host}`);
+            console.log(`[DlnaProvider] NEW Device: Name=${device.name}, Host=${device.host}`);
         }
 
         const now = Date.now();
@@ -70,7 +77,18 @@ function init() {
  */
 function startDiscovery(onDeviceFound, onError) {
     if (isDiscovering) {
-        console.log('[DlnaProvider] Already discovering');
+        console.log('[DlnaProvider] Already discovering, re-emitting known devices');
+        devices.forEach((entry) => {
+            if (onDeviceFound) {
+                onDeviceFound({
+                    name: entry.device.name,
+                    host: entry.device.host,
+                    type: 'dlna',
+                    id: entry.device.host || entry.device.name,
+                    originalDevice: entry.device
+                });
+            }
+        });
         return;
     }
 
@@ -81,18 +99,22 @@ function startDiscovery(onDeviceFound, onError) {
     discoveryCallback = onDeviceFound;
     errorCallback = onError;
 
-    // Trigger immediate scan
     console.log('[DlnaProvider] Triggering initial SSDP scan...');
     browser.update();
 
-    // Polling every 2s for device refresh
+    // Timeout warning
+    setTimeout(() => {
+        if (isDiscovering && devices.size === 0) {
+            console.warn('[DlnaProvider] No DLNA devices found after 10s - check firewall/network config');
+        }
+    }, 10000);
+
     pollInterval = setInterval(() => {
         if (!isDiscovering) {
             clearInterval(pollInterval);
             pollInterval = null;
             return;
         }
-        console.log('[DlnaProvider] Polling SSDP...');
         browser.update();
         pruneStaleDevices();
     }, POLLING_INTERVAL_MS);

@@ -274,8 +274,12 @@ ipcMain.on('cast-device-selected', async (event, { deviceName, movieInfo }) => {
             throw new Error('Error de red: El servidor sigue en localhost. La TV no podrá verlo.');
         }
 
-        // STEP 4: Prepare subtitles
+        // STEP 4: Prepare subtitles (with cleanup first)
         let subtitleUrl = null;
+
+        // CRITICAL: Always clean up previous subtitles before new cast
+        subtitles.stopSubtitleServer();
+
         if (movieInfo?.subtitleDownloadUrl) {
             console.log('[Main] Step 4: Preparing subtitles for cast...');
             try {

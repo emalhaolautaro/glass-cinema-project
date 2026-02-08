@@ -98,20 +98,43 @@ function getDiscoveredDevices() {
 
 // --- Playback ---
 
+/**
+ * Extract device ID from UI-formatted name
+ * e.g., "Android TV [AI-PONT-SA-123]" -> "AI-PONT-SA-123"
+ * e.g., "Living Room TV [DLNA]" -> "Living Room TV" (for DLNA)
+ */
+function extractDeviceId(uiName) {
+    // Match content inside last brackets: "Name [ID]" -> "ID"
+    const match = uiName.match(/\[([^\]]+)\]$/);
+    if (match) {
+        const extracted = match[1];
+        // If it's just "DLNA", return the name without the bracket part
+        if (extracted === 'DLNA') {
+            return uiName.replace(/\s*\[DLNA\]$/, '');
+        }
+        return extracted;
+    }
+    return uiName; // Fallback to original
+}
+
 async function playOnDevice(deviceName, mediaInfo) {
     console.log(`[CastManager] Requesting playback on ${deviceName}`);
 
-    // Try Chromecast first
-    let deviceWrapper = ChromecastProvider.getDevice(deviceName);
+    // Extract actual device ID from UI-formatted name
+    const deviceId = extractDeviceId(deviceName);
+    console.log(`[CastManager] Extracted device ID: ${deviceId}`);
+
+    // Try Chromecast first (using extracted ID)
+    let deviceWrapper = ChromecastProvider.getDevice(deviceId);
     let deviceType = 'chromecast';
 
     // Fallback to DLNA
     if (!deviceWrapper) {
-        deviceWrapper = DlnaProvider.getDevice(deviceName);
+        deviceWrapper = DlnaProvider.getDevice(deviceId);
         deviceType = 'dlna';
     }
 
-    if (!deviceWrapper) throw new Error(`Device not found: ${deviceName}`);
+    if (!deviceWrapper) throw new Error(`Device not found: ${deviceName} (ID: ${deviceId})`);
 
     const device = deviceWrapper.originalDevice;
     activeDevice = device;
