@@ -17,13 +17,25 @@ const Subtitles = {
 
     clearTracks() {
         const v = App.dom.player.video;
+
+        // 1. Remove DOM elements
         const tracks = v.querySelectorAll('track');
         tracks.forEach(t => t.remove());
+
+        // 2. Force disable all internal TextTracks
+        // (Removing DOM node doesn't always clear the internal track list immediately)
+        if (v.textTracks) {
+            for (let i = 0; i < v.textTracks.length; i++) {
+                try {
+                    v.textTracks[i].mode = 'disabled';
+                } catch (e) { }
+            }
+        }
 
         // Clear stored URL for cast
         App.state.currentSubtitleUrl = null;
 
-        console.log('[Subtitles] Cleared tracks');
+        console.log('[Subtitles] Cleared tracks (DOM & Internal)');
     },
 
     injectTrack(vttContent, label) {
@@ -49,6 +61,42 @@ const Subtitles = {
             v.textTracks[0].mode = 'showing';
         }
         console.log(`[Subtitles] Injected track: ${label}`);
+    },
+
+    setLocalTrack(url, label) {
+        const v = App.dom.player.video;
+        this.clearTracks(); // Ensure previous tracks are gone
+
+        const track = document.createElement('track');
+        track.kind = 'subtitles';
+        track.label = label;
+        track.srclang = 'es';
+        track.src = url;
+        track.default = true;
+
+        // Use event listener for robust activation
+        track.onload = () => {
+            console.log(`[Subtitles] Track loaded successfully: ${label}`);
+            track.track.mode = 'showing';
+        };
+
+        track.onerror = (e) => {
+            console.error('[Subtitles] Track failed to load:', e);
+        };
+
+        v.appendChild(track);
+
+        // Fallback: If cached or instant load, event might fire before listener? 
+        // No, because we append after adding listeners. 
+        // Just in case, force check.
+        requestAnimationFrame(() => {
+            if (track.readyState === 2) { // LOADED
+                track.track.mode = 'showing';
+            }
+        });
+
+        App.state.currentSubtitleUrl = url;
+        console.log(`[Subtitles] Set local track: ${label}`);
     },
 
     async fetchForMovie(imdbId) {
@@ -93,11 +141,35 @@ const Subtitles = {
     },
 
     async load(sub) {
-        console.log(`[Subtitles] Downloading: ${sub.language} from ${sub.downloadUrl}`);
+        console.log(`[Subtitles] Loading: ${sub.language} (Local: ${!!sub.isLocal})`);
 
         try {
-            const srt = await window.api.loadSelectedSub(sub.downloadUrl);
+            let content;
 
+            if (sub.isLocal) {
+                // Fetch directly from local server
+                const res = await fetch(sub.downloadUrl);
+                if (!res.ok) throw new Error(`Local fetch failed: ${res.status}`);
+                content = await res.text();
+
+                // If it's already VTT (served as .vtt), just inject. Else convert.
+                // We assume locally served files might be VTT or SRT.
+                const isVtt = sub.downloadUrl.endsWith('.vtt') || content.startsWith('WEBVTT');
+
+                if (isVtt) {
+                    this.injectTrack(content, sub.language);
+                } else {
+                    const vtt = this.srtToWebVTT(content);
+                    this.injectTrack(vtt, sub.language);
+                }
+
+                // Store for cast
+                App.state.currentSubtitleUrl = sub.downloadUrl;
+                return;
+            }
+
+            // Normal Online Flow (ZIP)
+            const srt = await window.api.loadSelectedSub(sub.downloadUrl);
             if (!srt) throw new Error("Empty subtitle content");
 
             const vtt = this.srtToWebVTT(srt);

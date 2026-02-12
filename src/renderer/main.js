@@ -235,6 +235,7 @@ const Main = {
         const originalOpen = UI.openModal;
         UI.openModal = async (movie) => {
             originalOpen.call(UI, movie); // Call original to show UI
+            App.state.currentMovie = movie; // Ensure state is set for Modals
 
             // --- Persistence Logic ---
             const btnLike = document.getElementById('btn-like');
@@ -384,6 +385,12 @@ const Main = {
             }
         }
 
+        // Final Fallback: InfoHash from Movie Object (common in stored downloads)
+        if (!magnet && movie.infoHash) {
+            console.log('[Main] Constructing magnet from InfoHash (Storage Fallback)');
+            magnet = `magnet:?xt=urn:btih:${movie.infoHash}&dn=${encodeURIComponent(movie.title)}`;
+        }
+
         if (!magnet) {
             console.error('[Main] No torrent/magnet found. Movie object:', movie);
             alert("No se encontró un torrent para esta película (Intenta removerla y volverla a agregar a la biblioteca)");
@@ -392,9 +399,47 @@ const Main = {
             return;
         }
 
+        // Check if downloaded first
+        if (movie.infoHash) {
+            const status = await window.api.checkDownloadStatus(movie.infoHash);
+            if (status.isDownloaded) {
+                console.log('[Main] Movie is downloaded. Starting Local Playback...');
+                const { videoUrl, subtitleUrl } = await window.api.playLocal(movie.infoHash);
+
+                if (videoUrl) {
+                    // Set video source directly
+                    const video = document.querySelector('video');
+                    video.src = videoUrl;
+                    video.play();
+
+                    // Load local subtitle if available
+                    if (subtitleUrl) {
+                        console.log('[Main] Loading local subtitle:', subtitleUrl);
+
+                        const label = `${movie.subtitleLanguage || 'Subtítulos'} (Descargado)`;
+                        Subtitles.setLocalTrack(subtitleUrl, label);
+
+                        // 2. Update Subtitle Menu State
+                        App.state.availableSubtitles = [{
+                            language: label,
+                            downloadUrl: subtitleUrl,
+                            isLocal: true,
+                            id: 'local-sub'
+                        }];
+                    } else {
+                        App.state.availableSubtitles = [];
+                    }
+
+                    UI.hideLoader();
+                    return; // EXIT HERE, do not start torrent stream
+                }
+            }
+        }
+
         window.api.startStream(magnet);
 
-        // Fetch Subtitles
+        // Fetch Subtitles (Only if NOT local - or if local didn't have subs, but we assume local has them if downloaded)
+        // Actually, if we played local, we returned above. So this only runs for streaming.
         if (movie.imdb_code) {
             console.log(`[Main] Movie has IMDB code: ${movie.imdb_code} - Fetching subtitles...`);
             await Subtitles.fetchForMovie(movie.imdb_code);
@@ -507,7 +552,15 @@ const Main = {
 
                 console.log('[Main] Starting Download:', movieToDownload.title, movieToDownload.quality, targetHash);
 
-                window.api.startDownload(movieToDownload);
+                // Open Download Modal instead of immediate download
+                if (DownloadModal) {
+                    // Update global state just in case (though we did it in openModal)
+                    App.state.currentMovie = movieToDownload;
+                    DownloadModal.show();
+                } else {
+                    console.error('DownloadModal not found, falling back');
+                    window.api.startDownload(movieToDownload);
+                }
 
                 // Update UI immediately to 0%
                 btn.className = 'download-container'; // Restored class

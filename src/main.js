@@ -185,6 +185,15 @@ ipcMain.on('start-stream', (event, magnet) => {
     );
 });
 
+// New Offline Playback Handler
+ipcMain.handle('play-local', (event, infoHash) => {
+    return new Promise((resolve) => {
+        streaming.serveLocalFolder(infoHash, (videoUrl, subtitleUrl) => {
+            resolve({ videoUrl, subtitleUrl });
+        });
+    });
+});
+
 ipcMain.on('stop-stream', () => {
     console.log('[Main] Stopping stream requested by renderer');
     streaming.fullCleanup().catch(err => console.error('[Main] Stop stream error:', err));

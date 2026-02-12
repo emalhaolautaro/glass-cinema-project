@@ -501,12 +501,27 @@ async function startDownload(movie, subtitleUrl, onProgress, onComplete) {
         try {
             console.log('[Downloads] Fetching subtitles...');
             const srtContent = await subtitles.downloadSubtitle(subtitleUrl);
+
+            // Save raw SRT
+            fs.writeFileSync(path.join(downloadPath, 'subtitles.srt'), srtContent);
+            console.log('[Downloads] SRT Subtitles saved.');
+
+            // Convert and save VTT
             const vttContent = subtitles.srtToVtt(srtContent);
             fs.writeFileSync(path.join(downloadPath, 'subtitles.vtt'), vttContent);
-            console.log('[Downloads] Subtitles saved.');
+            console.log('[Downloads] VTT Subtitles saved.');
         } catch (err) {
             console.error('[Downloads] Subtitle error:', err);
         }
+    }
+
+    // 2.5 Save Metadata (JSON)
+    try {
+        const metadataPath = path.join(downloadPath, 'metadata.json');
+        fs.writeFileSync(metadataPath, JSON.stringify(movie, null, 2));
+        console.log('[Downloads] Metadata saved.');
+    } catch (err) {
+        console.error('[Downloads] Metadata save error:', err);
     }
 
     // 3. Start Torrent Download
@@ -949,6 +964,125 @@ function getActiveDownloads() {
     return result;
 }
 
+/**
+ * Serve a downloaded folder directly (Bypassing Torrent logic)
+ * Serves video.mp4, subtitles.vtt, poster.jpg from DOWNLOADS_DIR/infoHash
+ */
+function serveLocalFolder(infoHash, onReady) {
+    if (activeServer) {
+        try { activeServer.close(); } catch (e) { }
+        activeServer = null;
+    }
+
+    const folderPath = path.join(DOWNLOADS_DIR, infoHash);
+    if (!fs.existsSync(folderPath)) {
+        console.error('[Streaming] Local folder not found:', folderPath);
+        if (onReady) onReady(null);
+        return;
+    }
+
+    const server = http.createServer((req, res) => {
+        // Headers for CORS and Streaming
+        const headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Range'
+        };
+
+        if (req.method === 'OPTIONS') {
+            res.writeHead(204, headers);
+            res.end();
+            return;
+        }
+
+        let filePath;
+        let contentType;
+
+        // Routing
+        if (req.url === '/video.mp4' || req.url === '/') {
+            filePath = path.join(folderPath, 'video.mp4');
+            contentType = 'video/mp4';
+        } else if (req.url === '/subtitles.vtt') {
+            filePath = path.join(folderPath, 'subtitles.vtt');
+            contentType = 'text/vtt';
+        } else if (req.url === '/subtitles.srt') {
+            filePath = path.join(folderPath, 'subtitles.srt');
+            contentType = 'text/plain'; // or application/x-subrip
+        } else if (req.url === '/poster.jpg') {
+            filePath = path.join(folderPath, 'poster.jpg');
+            contentType = 'image/jpeg';
+        } else {
+            res.writeHead(404, headers);
+            res.end('Not found');
+            return;
+        }
+
+        if (!fs.existsSync(filePath)) {
+            // Fallbacks:
+            // If vtt requested but only srt exists (rare with our new logic but possible for old)
+            if (req.url === '/subtitles.vtt' && fs.existsSync(path.join(folderPath, 'subtitles.srt'))) {
+                // We could on-the-fly convert, but for now just 404 implies no subs
+                console.warn('[Streaming] Requested VTT missing, but SRT exists. Conversion not implemented in serveLocalFolder yet.');
+            }
+            res.writeHead(404, headers);
+            res.end('File not found');
+            return;
+        }
+
+        // Serve File
+        const stat = fs.statSync(filePath);
+        const fileSize = stat.size;
+        const range = req.headers.range;
+
+        if (range && contentType === 'video/mp4') {
+            const parts = range.replace(/bytes=/, "").split("-");
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+            const chunksize = (end - start) + 1;
+            const file = fs.createReadStream(filePath, { start, end });
+
+            res.writeHead(206, {
+                ...headers,
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunksize,
+                'Content-Type': contentType,
+            });
+            file.pipe(res);
+        } else {
+            res.writeHead(200, {
+                ...headers,
+                'Content-Length': fileSize,
+                'Content-Type': contentType,
+            });
+            fs.createReadStream(filePath).pipe(res);
+        }
+    });
+
+    // Bind to 0.0.0.0 only if Cast Mode, else localhost
+    const host = isCastMode ? '0.0.0.0' : '127.0.0.1';
+
+    server.listen(0, host, () => {
+        const port = server.address().port;
+        activeServer = server;
+        activePort = port;
+
+        // Dummy values to satisfy other parts of the system if they check
+        activeFileIndex = 0;
+        activeFileName = 'video.mp4';
+
+        const urlHost = isCastMode ? networkUtils.getLocalIP() : '127.0.0.1';
+        const url = `http://${urlHost}:${port}/video.mp4`;
+
+        // Check for subtitles presence for convenience
+        const hasSubtitles = fs.existsSync(path.join(folderPath, 'subtitles.vtt'));
+        const subtitleUrl = hasSubtitles ? `http://${urlHost}:${port}/subtitles.vtt` : null;
+
+        console.log(`[Streaming] Serving LOCAL FOLDER at ${url} (Cast: ${isCastMode})`);
+        if (onReady) onReady(url, subtitleUrl);
+    });
+}
+
 module.exports = {
     startStream,
     startDownload, // Exported
@@ -962,5 +1096,6 @@ module.exports = {
     isCastModeEnabled,
     getStreamUrl,
     rebindServerForCast,
-    CACHE_DIR
+    CACHE_DIR,
+    serveLocalFolder // Exported
 };

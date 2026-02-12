@@ -125,13 +125,14 @@ function addDownload(movie, localPath) {
     const existingIndex = downloads.findIndex(d => d.infoHash === movie.infoHash);
 
     const downloadEntry = {
-        title: movie.title,
-        year: movie.year,
-        infoHash: movie.infoHash,
-        posterUrl: movie.coverUrl, // We'll store local path later if needed, store relative path?
-        localPath: localPath, // Absolute path or relative to USER_DATA
+        ...movie, // Store ALL metadata (description, rating, cast, runtime, etc.)
+        infoHash: movie.infoHash, // Ensure this is preserved/overwritten correctly
+        localPath: localPath,
         addedAt: Date.now(),
-        genres: movie.genres || [] // Persist genres
+        // Persist critical metadata for playback if not already in ...movie
+        magnet: movie.magnet || (movie.torrents?.[0]?.hash ? `magnet:?xt=urn:btih:${movie.torrents[0].hash}&dn=${encodeURIComponent(movie.title)}` : null),
+        quality: movie.quality,
+        torrents: movie.torrents
     };
 
     if (existingIndex !== -1) {

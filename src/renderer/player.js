@@ -17,7 +17,9 @@ const Player = {
         p.progressBar.style.width = '0%';
         p.bufferBar.style.width = '0%';
         p.timeDisplay.textContent = '0:00';
+        p.video.innerHTML = ''; // Aggressive cleanup of tracks/sources
         p.video.src = '';
+        p.video.load(); // Force reset
         App.state.downloadProgress = 0;
         this.updatePlayIcon(false);
 

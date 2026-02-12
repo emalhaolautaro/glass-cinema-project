@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('api', {
     stopStream: () => ipcRenderer.send('stop-stream'),
     onStreamReady: (callback) => ipcRenderer.on('stream-ready', (event, url) => callback(url)),
     onLoadLocalSubtitle: (callback) => ipcRenderer.on('load-local-subtitle', (event, url) => callback(url)),
+    playLocal: (infoHash) => ipcRenderer.invoke('play-local', infoHash), // New Offline Playback IPC
     // Offline Downloads
     startDownload: (movie, subtitleUrl) => ipcRenderer.send('start-download', { movie, subtitleUrl }),
     getDownloads: () => ipcRenderer.invoke('get-downloads'),

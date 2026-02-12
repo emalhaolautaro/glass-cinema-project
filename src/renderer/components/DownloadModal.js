@@ -163,7 +163,20 @@ const DownloadModal = {
 
     async startDownload() {
         const movie = App.state.currentMovie;
+        if (!movie) {
+            console.error('[DownloadModal] No movie selected');
+            Toast.show('Error: No hay película seleccionada', 'error');
+            return;
+        }
         const subtitleUrl = this.subtitleSelect.value;
+
+        // Capture selected language name for metadata
+        if (subtitleUrl) {
+            const selectedOption = this.subtitleSelect.options[this.subtitleSelect.selectedIndex];
+            if (selectedOption) {
+                movie.subtitleLanguage = selectedOption.text;
+            }
+        }
 
         console.log('[DownloadModal] Starting download:', movie.title);
 
