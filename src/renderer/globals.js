@@ -30,8 +30,7 @@ const App = {
             rating: document.getElementById('m-rating'),
             runtime: document.getElementById('m-runtime'),
             synopsis: document.getElementById('m-synopsis'),
-            playBtn: document.getElementById('btn-play'),
-            castBtn: document.getElementById('btn-cast')
+            playBtn: document.getElementById('btn-play')
         },
 
         // Player
@@ -48,6 +47,7 @@ const App = {
             volumeSlider: document.getElementById('p-volume'),
             fullscreenBtn: document.getElementById('p-fullscreen'),
             subtitlesBtn: document.getElementById('p-subtitles'),
+            castBtn: document.getElementById('p-cast'),
             subtitleMenu: document.getElementById('subtitle-menu'),
             subtitleMenuList: document.getElementById('subtitle-menu-list'),
             subtitleMenuClose: document.getElementById('subtitle-menu-close'),

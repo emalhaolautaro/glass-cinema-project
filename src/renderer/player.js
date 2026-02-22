@@ -90,31 +90,19 @@ const Player = {
      * Enter cast mode - pause and mute local video, show cast UI
      */
     enterCastMode() {
-        console.log('[Player] Entering cast mode');
         this.isCastMode = true;
-
         const p = App.dom.player;
 
-        // CRITICAL: Pause local video to prevent echo
-        try {
-            p.video.pause();
-        } catch (e) { }
-
-        // Mute AND set volume to 0 for extra safety
+        try { p.video.pause(); } catch (e) { }
         p.video.muted = true;
         p.video.volume = 0;
-
-        // Hide local video element but keep player UI visible
         p.video.style.opacity = '0.1';
 
-        // Show player view (for controls)
         UI.showPlayer();
         UI.hideLoader();
 
-        // Add cast indicator class
         p.view.classList.add('cast-mode');
-
-        console.log('[Player] Cast mode active - local video paused and muted');
+        if (p.castBtn) p.castBtn.style.display = 'none';
     },
 
     /**
@@ -122,19 +110,14 @@ const Player = {
      */
     exitCastMode() {
         if (!this.isCastMode) return;
-
-        console.log('[Player] Exiting cast mode');
         this.isCastMode = false;
         this.castDuration = 0;
 
         const p = App.dom.player;
-
-        // Restore local video
         p.video.muted = false;
         p.video.style.opacity = '1';
-
-        // Remove cast indicator
         p.view.classList.remove('cast-mode');
+        if (p.castBtn) p.castBtn.style.display = '';
     },
 
     togglePlay() {
@@ -212,10 +195,15 @@ const Player = {
             }
         });
 
-        // Close Button
         p.closeBtn.addEventListener('click', () => this.close());
 
-        // Mouse inactivity logic
+        if (p.castBtn) {
+            p.castBtn.addEventListener('click', () => {
+                if (this.isCastMode) return;
+                CastModal.show();
+            });
+        }
+
         this.setupInactivity();
     },
 
@@ -280,7 +268,6 @@ const Player = {
 
         // Reset app state
         App.state.currentSubtitleUrl = null;
-        App.state.castPendingMode = false;
         App.state.streamUrl = null;
 
         // Stop backend stream

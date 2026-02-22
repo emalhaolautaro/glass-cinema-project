@@ -161,8 +161,6 @@ const CastModal = {
         document.removeEventListener('keydown', this.handleKeydown);
         clearTimeout(this.discoveryTimeout);
 
-        App.state.castPendingMode = false;
-
         window.api.stopCastDiscovery();
     },
 

@@ -331,21 +331,6 @@ const Main = {
 
             // Attach Main's play logic
             App.dom.modal.playBtn.onclick = () => this.playMovie(movie);
-
-            // Attach Cast button handler - Cast DIRECTLY without local playback
-            App.dom.modal.castBtn.onclick = () => {
-                console.log('[Main] Cast button clicked - preparing stream for cast only');
-
-                // Store movie for cast use
-                App.state.currentMovie = movie;
-                App.state.pendingCastMovie = movie;
-
-                // Show cast modal FIRST while stream prepares in background
-                CastModal.show();
-
-                // Prepare stream in background (no UI changes)
-                this.prepareStreamForCast(movie);
-            };
         };
     },
 
@@ -569,63 +554,14 @@ const Main = {
                 this.updateDownloadButton(movie);
             };
         }
-    },
-
-    async prepareStreamForCast(movie) {
-        console.log(`[Main] Preparing stream for cast: ${movie.title}`);
-
-        App.state.castPendingMode = true;
-
-        // FULL cleanup to prevent subtitle accumulation
-        Subtitles.clearTracks();
-        window.api.clearSubtitles();
-        App.state.currentSubtitleUrl = null;
-        App.state.availableSubtitles = [];
-        if (App.state.failedSubtitles) {
-            App.state.failedSubtitles.delete(movie.imdb_code);
-        }
-
-        // Start Stream
-        const torrent = movie.torrents?.find(t => t.quality === '1080p') || movie.torrents?.[0];
-        if (!torrent) {
-            Toast.show('No hay torrent disponible para esta película', 'error');
-            App.state.castPendingMode = false;
-            return;
-        }
-
-        const magnet = `magnet:?xt=urn:btih:${torrent.hash}&dn=${encodeURIComponent(movie.title)}`;
-
-        // Start stream in background
-        window.api.startStream(magnet);
-
-        // Fetch and WAIT for Subtitles (important for cast)
-        if (movie.imdb_code) {
-            console.log('[Main] Fetching and waiting for subtitles for cast...');
-            try {
-                await Subtitles.fetchForMovie(movie.imdb_code);
-                console.log('[Main] Subtitles ready for cast, URL:', App.state.currentSubtitleUrl);
-            } catch (e) {
-                console.warn('[Main] Subtitle fetch error:', e);
-            }
-        }
-
-        console.log('[Main] Stream and subtitles preparation complete');
     }
 };
 
 // --- IPC Listeners ---
 
-// Stream ready handler - SKIPS local playback if cast is pending
+// Stream ready handler
 window.api.onStreamReady((url) => {
     console.log('[IPC] Stream ready:', url);
-
-    // If we're waiting for cast, DON'T start local playback
-    if (App.state.castPendingMode) {
-        console.log('[IPC] Cast pending mode - skipping local playback');
-        // Just store URL for reference, don't play
-        App.state.streamUrl = url;
-        return;
-    }
 
     // Normal local playback
     App.dom.player.video.src = url;

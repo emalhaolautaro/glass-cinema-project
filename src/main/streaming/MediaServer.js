@@ -121,7 +121,13 @@ function addSecurityMiddleware(server) {
 
 function closeServer() {
     if (activeServer) {
-        try { activeServer.removeAllListeners(); activeServer.close(); } catch (e) { }
+        try {
+            if (typeof activeServer.closeAllConnections === 'function') {
+                activeServer.closeAllConnections();
+            }
+            activeServer.removeAllListeners();
+            activeServer.close();
+        } catch (e) { }
         activeServer = null;
     }
 }
@@ -132,6 +138,9 @@ function destroy() {
         const s = activeServer;
         activeServer = null;
         try {
+            if (typeof s.closeAllConnections === 'function') {
+                s.closeAllConnections();
+            }
             s.removeAllListeners();
             s.close(() => { console.log('[MediaServer] Server closed'); res(); });
             setTimeout(res, 2000);

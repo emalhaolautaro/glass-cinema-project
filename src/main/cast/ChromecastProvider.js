@@ -66,7 +66,6 @@ function startDiscovery(localIp, onDeviceFound, onError) {
     pollInterval = setInterval(() => {
         if (!isDiscovering) { clearInterval(pollInterval); pollInterval = null; return; }
         browser.update();
-        pruneStaleDevices();
     }, POLLING_INTERVAL_MS);
 }
 

@@ -18,13 +18,19 @@ async function rebindForCast(localIp, torrentManager) {
         const server = mediaServer.getActiveServer();
         if (server) {
             try { server.removeAllListeners(); } catch (e) { }
-            server.close(() => {
-                mediaServer.closeServer();
-                setTimeout(() => createCastServer(localIp, hasTorrent, torrentManager, resolve), 200);
-            });
-        } else {
-            createCastServer(localIp, hasTorrent, torrentManager, resolve);
+
+            // CRITICAL FIX: Forcefully drop all active sockets (e.g. paused local video) 
+            // otherwise server.close() hangs forever waiting for keep-alives to drain
+            if (typeof server.closeAllConnections === 'function') {
+                try { server.closeAllConnections(); } catch (e) { }
+            }
+
+            try { server.close(); } catch (e) { }
+            mediaServer.closeServer();
         }
+
+        // Proceed without waiting for close callback since sockets are cleared
+        setTimeout(() => createCastServer(localIp, hasTorrent, torrentManager, resolve), 100);
     });
 }
 

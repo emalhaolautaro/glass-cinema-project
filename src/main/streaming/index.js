@@ -13,7 +13,6 @@ let isClean = true;
 let isShuttingDown = false;
 let cleanupPromise = null;
 let progressInterval = null;
-let streamReadyPromise = null;
 
 function registerExitHandlers() {
     const cleanup = () => {
@@ -41,15 +40,11 @@ async function startStream(magnet, onReady, onProgress) {
 
     isClean = false;
 
-    let resolveStreamReady;
-    streamReadyPromise = new Promise(resolve => { resolveStreamReady = resolve; });
-
     try {
         const result = await torrentManager.addTorrent(magnet);
 
         if (result.isLocal) {
             mediaServer.serveLocalFile(result.localFilePath, (url, subtitleUrl) => {
-                resolveStreamReady(true);
                 if (onReady) onReady(url, subtitleUrl);
             });
             return;
@@ -58,10 +53,7 @@ async function startStream(magnet, onReady, onProgress) {
         const { torrent, fileIndex, fileName } = result;
 
         mediaServer.serveTorrent(torrent, fileIndex, fileName, {
-            onReady: (url) => {
-                resolveStreamReady(true);
-                if (onReady) onReady(url);
-            }
+            onReady: (url) => { if (onReady) onReady(url); }
         });
 
         if (onProgress) {
@@ -74,29 +66,17 @@ async function startStream(magnet, onReady, onProgress) {
         }
     } catch (err) {
         console.error('[Streaming] Error starting stream:', err);
-        resolveStreamReady(false);
         isClean = true;
     }
 }
 
-async function rebindServerForCast(localIp) {
-    if (streamReadyPromise) {
-        console.log('[Streaming] Waiting for stream to be ready before cast...');
-        const ready = await Promise.race([
-            streamReadyPromise,
-            new Promise(resolve => setTimeout(() => resolve('timeout'), 30000))
-        ]);
-        if (ready === 'timeout') { console.error('[Streaming] Timeout waiting for stream'); return null; }
-        if (ready === false) { console.error('[Streaming] Stream failed to start'); return null; }
-        console.log('[Streaming] Stream ready, proceeding with cast rebind');
-    }
+function rebindServerForCast(localIp) {
     return castServer.rebindForCast(localIp, torrentManager);
 }
 
 function serveLocalFolder(infoHash, onReady) {
     isClean = false;
-    const server = localFolder.serveLocalFolder(infoHash, onReady, mediaServer.isCastModeEnabled());
-    return server;
+    return localFolder.serveLocalFolder(infoHash, onReady, mediaServer.isCastModeEnabled());
 }
 
 async function forceCleanup() {
@@ -112,7 +92,6 @@ async function forceCleanup() {
     mediaServer.resetState();
     isClean = true;
     cleanupPromise = null;
-    streamReadyPromise = null;
     console.log('[Streaming] FORCE CLEANUP complete');
 }
 
