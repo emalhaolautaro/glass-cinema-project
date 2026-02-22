@@ -158,11 +158,11 @@ const CastModal = {
         this.isOpen = false;
         this.backdropEl.classList.remove('active');
 
-        // Cleanup
         document.removeEventListener('keydown', this.handleKeydown);
         clearTimeout(this.discoveryTimeout);
 
-        // Stop discovery
+        App.state.castPendingMode = false;
+
         window.api.stopCastDiscovery();
     },
 
@@ -179,7 +179,7 @@ const CastModal = {
      * Add a discovered device to the list
      */
     addDevice(device) {
-        // Check if device already exists
+        if (!this.isOpen) return;
         if (this.devices.find(d => d.name === device.name)) return;
 
         this.devices.push(device);

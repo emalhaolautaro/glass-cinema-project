@@ -352,7 +352,6 @@ const Main = {
     async playMovie(movie) {
         console.log(`[Main] Playing: ${movie.title}`);
 
-        // UI Transitions
         UI.closeModal();
         UI.showPlayer();
         UI.showLoader();

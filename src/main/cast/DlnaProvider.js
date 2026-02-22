@@ -1,65 +1,32 @@
-/**
- * DLNA Provider Module
- * Singleton browser pattern for persistent SSDP listening
- * Mirrors ChromecastProvider API for seamless CastManager integration
- */
 const dlnacasts = require('dlnacasts');
 
-// --- Configuration ---
-const POLLING_INTERVAL_MS = 2000;
-const DEVICE_TTL_MS = 15000;
+const POLLING_INTERVAL_MS = 5000;
+const DEVICE_TTL_MS = 60000;
 
-// --- Singleton State ---
 let browser = null;
 let initialized = false;
 let discoveryCallback = null;
 let errorCallback = null;
 let isDiscovering = false;
 let pollInterval = null;
-let devices = new Map(); // id -> { device, lastSeen }
+let devices = new Map();
 
-/**
- * Initialize browser singleton (lazy, called once)
- */
 function init() {
     if (initialized) return;
 
-    console.log('[DlnaProvider] Initializing singleton browser...');
+    console.log('[DlnaProvider] Initializing...');
 
-    try {
-        browser = dlnacasts();
-    } catch (e) {
-        console.error('[DlnaProvider] Failed to initialize browser:', e);
+    try { browser = dlnacasts(); } catch (e) {
+        console.error('[DlnaProvider] Init failed:', e);
         return;
     }
 
     initialized = true;
 
     browser.on('update', (device) => {
-        console.log('[DlnaProvider] RAW update event - host:', device?.host, 'name:', device?.name);
-
+        console.log(`[DlnaProvider] update event: name=${device?.name}, host=${device?.host}`);
         if (!device || !device.name) return;
-
-        const deviceId = device.host || device.name;
-        const existing = devices.get(deviceId);
-        const isNew = !existing;
-
-        if (isNew) {
-            console.log(`[DlnaProvider] NEW Device: Name=${device.name}, Host=${device.host}`);
-        }
-
-        const now = Date.now();
-        devices.set(deviceId, { device, lastSeen: now });
-
-        if (isDiscovering && discoveryCallback) {
-            discoveryCallback({
-                name: device.name,
-                host: device.host,
-                type: 'dlna',
-                id: deviceId,
-                originalDevice: device
-            });
-        }
+        registerDevice(device);
     });
 
     browser.on('error', (err) => {
@@ -67,292 +34,133 @@ function init() {
         if (errorCallback) errorCallback(err);
     });
 
-    console.log('[DlnaProvider] Browser initialized');
+    console.log(`[DlnaProvider] Browser ready, players: ${browser.players?.length || 0}`);
 }
 
-/**
- * Start discovery with polling
- * @param {function} onDeviceFound - Callback for each device
- * @param {function} onError - Error callback
- */
-function startDiscovery(onDeviceFound, onError) {
-    if (isDiscovering) {
-        console.log('[DlnaProvider] Already discovering, re-emitting known devices');
-        devices.forEach((entry) => {
-            if (onDeviceFound) {
-                onDeviceFound({
-                    name: entry.device.name,
-                    host: entry.device.host,
-                    type: 'dlna',
-                    id: entry.device.host || entry.device.name,
-                    originalDevice: entry.device
-                });
-            }
-        });
-        return;
-    }
+function registerDevice(device) {
+    const deviceId = device.host || device.name;
+    const isNew = !devices.has(deviceId);
 
+    if (isNew) console.log(`[DlnaProvider] NEW device: ${device.name} (${device.host})`);
+
+    devices.set(deviceId, { device, lastSeen: Date.now() });
+
+    if (isDiscovering && discoveryCallback) {
+        discoveryCallback({
+            name: device.name, host: device.host,
+            type: 'dlna', id: deviceId, originalDevice: device
+        });
+    }
+}
+
+function startDiscovery(onDeviceFound, onError) {
+    if (isDiscovering) return;
     init();
+    if (!browser) { console.error('[DlnaProvider] No browser, cannot discover'); return; }
 
     console.log('[DlnaProvider] Starting discovery...');
     isDiscovering = true;
     discoveryCallback = onDeviceFound;
     errorCallback = onError;
 
-    console.log('[DlnaProvider] Triggering initial SSDP scan...');
+    console.log('[DlnaProvider] Sending M-SEARCH for MediaRenderer:1...');
     browser.update();
 
-    // Timeout warning
-    setTimeout(() => {
-        if (isDiscovering && devices.size === 0) {
-            console.warn('[DlnaProvider] No DLNA devices found after 10s - check firewall/network config');
-        }
-    }, 10000);
-
     pollInterval = setInterval(() => {
-        if (!isDiscovering) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-            return;
-        }
+        if (!isDiscovering) { clearInterval(pollInterval); pollInterval = null; return; }
         browser.update();
         pruneStaleDevices();
     }, POLLING_INTERVAL_MS);
 }
 
-/**
- * Stop discovery (pauses callbacks and cleans up browser)
- */
 function stopDiscovery() {
-    console.log('[DlnaProvider] Stopping discovery...');
     isDiscovering = false;
     discoveryCallback = null;
     errorCallback = null;
 
-    if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-    }
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
 
     if (browser) {
-        try {
-            browser.destroy();
-            console.log('[DlnaProvider] Browser destroyed');
-        } catch (e) {
-            console.debug('[DlnaProvider] Destroy error:', e.message);
-        }
+        try { browser.destroy(); } catch (e) { }
         browser = null;
         initialized = false;
-        devices.clear();
     }
+
+    devices.clear();
 }
 
-/**
- * Remove devices not seen within TTL
- */
 function pruneStaleDevices() {
     const now = Date.now();
     for (const [id, entry] of devices.entries()) {
         if (now - entry.lastSeen > DEVICE_TTL_MS) {
-            console.log(`[DlnaProvider] Device stale, removing: ${entry.device.name}`);
+            console.log(`[DlnaProvider] Stale, removing: ${entry.device.name}`);
             devices.delete(id);
         }
     }
 }
 
-/**
- * Get all currently known devices
- * @returns {Array} Normalized device list
- */
 function getDevices() {
-    return Array.from(devices.values()).map(entry => ({
-        name: entry.device.name,
-        host: entry.device.host,
-        type: 'dlna',
-        id: entry.device.host || entry.device.name,
-        originalDevice: entry.device
+    return Array.from(devices.values()).map(e => ({
+        name: e.device.name, host: e.device.host,
+        type: 'dlna', id: e.device.host || e.device.name,
+        originalDevice: e.device
     }));
 }
 
-/**
- * Get a specific device by ID or Name
- * @param {string} identifier - Device ID or Name
- * @returns {object|null} Device entry or null
- */
 function getDevice(identifier) {
     let entry = devices.get(identifier);
-
-    // Fallback: search by name
     if (!entry) {
-        for (const [id, e] of devices) {
-            if (e.device.name === identifier) {
-                entry = e;
-                break;
-            }
-        }
+        for (const [id, e] of devices) { if (e.device.name === identifier) { entry = e; break; } }
     }
-
     if (!entry) return null;
     return {
-        name: entry.device.name,
-        host: entry.device.host,
-        type: 'dlna',
-        id: entry.device.host || entry.device.name,
+        name: entry.device.name, host: entry.device.host,
+        type: 'dlna', id: entry.device.host || entry.device.name,
         originalDevice: entry.device
     };
 }
 
-/**
- * Play media on a DLNA device
- * @param {object} device - Original device object
- * @param {object} mediaInfo - { url, title, coverUrl, subtitleUrl }
- * @returns {Promise}
- */
 function play(device, mediaInfo) {
     return new Promise((resolve, reject) => {
-        if (!device) return reject(new Error('No device provided'));
-
-        console.log(`[DlnaProvider] Playing on ${device.name}`);
-
-        const options = {
-            title: mediaInfo.title || 'Glass Cinema',
-            type: 'video/mp4'
-        };
-
-        // DLNA subtitle support (if device supports it)
-        if (mediaInfo.subtitleUrl) {
-            options.subtitles = [mediaInfo.subtitleUrl];
-        }
-
+        if (!device) return reject(new Error('No device'));
+        const options = { title: mediaInfo.title || 'Glass Cinema', type: 'video/mp4' };
+        if (mediaInfo.subtitleUrl) options.subtitles = [mediaInfo.subtitleUrl];
         device.play(mediaInfo.url, options, (err, status) => {
             if (err) return reject(err);
-            console.log(`[DlnaProvider] Playback started on ${device.name}`);
+            console.log(`[DlnaProvider] Playing on ${device.name}`);
             resolve({ device, status });
         });
     });
 }
 
-/**
- * Pause playback
- * @param {object} device - Original device
- * @returns {Promise}
- */
-function pause(device) {
-    return new Promise((resolve) => {
-        if (!device || typeof device.pause !== 'function') return resolve();
-        device.pause(() => resolve());
-    });
-}
+function pause(device) { return new Promise(r => { if (!device?.pause) return r(); device.pause(() => r()); }); }
+function resume(device) { return new Promise(r => { if (!device?.resume) return r(); device.resume(() => r()); }); }
+function seek(device, s) { return new Promise(r => { if (!device?.seek) return r(); device.seek(s, () => r()); }); }
+function setVolume(device, l) { return new Promise(r => { if (!device?.volume) return r(); device.volume(l, () => r()); }); }
 
-/**
- * Resume playback
- * @param {object} device - Original device
- * @returns {Promise}
- */
-function resume(device) {
-    return new Promise((resolve) => {
-        if (!device || typeof device.resume !== 'function') return resolve();
-        device.resume(() => resolve());
-    });
-}
-
-/**
- * Stop playback
- * @param {object} device - Original device
- * @returns {Promise}
- */
 function stop(device) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         if (!device) return resolve();
-
-        try {
-            if (typeof device.stop === 'function') {
-                device.stop(() => resolve());
-            } else {
-                resolve();
-            }
-        } catch (err) {
-            console.error('[DlnaProvider] Stop error:', err);
-            resolve();
-        }
+        try { if (typeof device.stop === 'function') device.stop(() => resolve()); else resolve(); }
+        catch (e) { console.error('[DlnaProvider] Stop error:', e); resolve(); }
     });
 }
 
-/**
- * Seek to position
- * @param {object} device - Original device
- * @param {number} seconds - Target position in seconds
- * @returns {Promise}
- */
-function seek(device, seconds) {
-    return new Promise((resolve) => {
-        if (!device || typeof device.seek !== 'function') return resolve();
-        device.seek(seconds, () => resolve());
-    });
-}
-
-/**
- * Set volume
- * @param {object} device - Original device
- * @param {number} level - Volume 0-1
- * @returns {Promise}
- */
-function setVolume(device, level) {
-    return new Promise((resolve) => {
-        if (!device || typeof device.volume !== 'function') return resolve();
-        device.volume(level, () => resolve());
-    });
-}
-
-/**
- * Get playback status
- * @param {object} device - Original device
- * @param {function} callback - Status callback
- */
 function getStatus(device, callback) {
-    if (!device || typeof device.status !== 'function') {
-        if (callback) callback({ playerState: 'UNKNOWN' });
-        return;
-    }
-
+    if (!device || typeof device.status !== 'function') { if (callback) callback({ playerState: 'UNKNOWN' }); return; }
     device.status((err, status) => {
-        if (err || !status) {
-            if (callback) callback({ playerState: 'UNKNOWN' });
-            return;
-        }
-        if (callback) {
-            callback({
-                currentTime: status.currentTime || 0,
-                duration: status.duration || 0,
-                playerState: status.playerState || 'UNKNOWN',
-                volume: status.volume || 1,
-                muted: false
-            });
-        }
+        if (err || !status) { if (callback) callback({ playerState: 'UNKNOWN' }); return; }
+        callback({
+            currentTime: status.currentTime || 0, duration: status.duration || 0,
+            playerState: status.playerState || 'UNKNOWN', volume: status.volume || 1, muted: false
+        });
     });
 }
 
-/**
- * Full cleanup - destroy browser (only on app exit)
- */
-function cleanup() {
-    console.log('[DlnaProvider] Full cleanup');
-    stopDiscovery();
-}
+function cleanup() { stopDiscovery(); }
 
 module.exports = {
-    init,
-    startDiscovery,
-    stopDiscovery,
-    getDevices,
-    getDevice,
-    play,
-    pause,
-    resume,
-    stop,
-    seek,
-    setVolume,
-    getStatus,
-    cleanup,
+    init, startDiscovery, stopDiscovery, getDevices, getDevice,
+    play, pause, resume, stop, seek, setVolume, getStatus, cleanup,
     TYPE: 'dlna'
 };
